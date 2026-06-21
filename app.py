@@ -23,11 +23,11 @@ if not st.session_state.logged_in:
     user = st.text_input("Username")
     pwd = st.text_input("Password", type="password")
     if st.button("Login"):
-        if user == "admin" and pwd == "admin":
+        if user == "sajjan" and pwd == "422003":
             st.session_state.logged_in = True
             st.session_state.user_role = "admin"
             st.rerun()
-        elif user == "staff1" and pwd == "staff123":
+        elif user == "vishal" and pwd == "7742":
             st.session_state.logged_in = True
             st.session_state.user_role = "staff"
             st.rerun()
