@@ -14,8 +14,9 @@ conn.execute('''CREATE TABLE IF NOT EXISTS equipment
                 (id INTEGER PRIMARY KEY, name TEXT, model TEXT, reg_no TEXT, exp_date DATE)''')
 conn.commit()
 
-# Login System
+# --- Login & Role Management ---
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
+if 'user_role' not in st.session_state: st.session_state.user_role = None
 
 if not st.session_state.logged_in:
     st.title("🔐 GIEPL ERP Login")
@@ -24,38 +25,48 @@ if not st.session_state.logged_in:
     if st.button("Login"):
         if user == "admin" and pwd == "admin":
             st.session_state.logged_in = True
+            st.session_state.user_role = "admin"
             st.rerun()
-        else: st.error("Galat username ya password!")
+        elif user == "staff1" and pwd == "staff123":
+            st.session_state.logged_in = True
+            st.session_state.user_role = "staff"
+            st.rerun()
+        else: st.error("गलत username या password!")
     st.stop()
 
 # Sidebar
 st.sidebar.title("🏗️ GIEPL ERP")
+st.sidebar.write(f"यूजर: {st.session_state.user_role.upper()}")
 choice = st.sidebar.selectbox("मेनू", ["डैशबोर्ड", "कर्मचारी प्रबंधन", "उपकरण प्रबंधन"])
 
-# 1. डैशबोर्ड
+# Developer Credit
+st.sidebar.markdown("---")
+st.sidebar.write("### 🏗️ Developed by: **Sajjan.exec**")
+st.sidebar.write("© 2026 GIEPL Enterprises")
+
+# --- Logic Starts Here ---
 if choice == "डैशबोर्ड":
-    st.title("📊 डैशबोर्ड & एक्सपायरी अलर्ट")
+    st.title("📊 डैशबोर्ड")
     df_equip = pd.read_sql("SELECT * FROM equipment", conn)
     if not df_equip.empty:
         df_equip['exp_date'] = pd.to_datetime(df_equip['exp_date'])
-        alert_df = df_equip[df_equip['exp_date'] <= (datetime.now() + pd.Timedelta(days=10))]
-        st.subheader("⚠️ 10 दिन में एक्सपायर होने वाले उपकरण")
-        st.dataframe(alert_df.style.set_properties(**{'background-color': '#ffcccc'}), use_container_width=True)
-        csv = df_equip.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 पूरी रिपोर्ट डाउनलोड करें", csv, "report.csv", "text/csv")
+        st.subheader("⚠️ 15 दिन में एक्सपायर होने वाले उपकरण")
+        alert_df = df_equip[df_equip['exp_date'] <= (datetime.now() + pd.Timedelta(days=15))]
+        st.dataframe(alert_df, use_container_width=True)
 
-# 2. कर्मचारी प्रबंधन
 elif choice == "कर्मचारी प्रबंधन":
     st.title("👤 कर्मचारी प्रबंधन")
-    with st.form("emp_form"):
-        name = st.text_input("नाम"); phone = st.text_input("मोबाइल"); addr = st.text_area("पता")
-        bank = st.text_input("बैंक"); acc = st.text_input("अकाउंट नंबर"); ifsc = st.text_input("IFSC")
-        if st.form_submit_button("सेव करें"):
-            conn.execute("INSERT INTO employees (name, phone, address, bank_name, acc_no, ifsc) VALUES (?,?,?,?,?,?)", (name, phone, addr, bank, acc, ifsc))
-            conn.commit(); st.success("डेटा सेव हुआ!")
+    if st.session_state.user_role == "admin":
+        with st.form("emp_form"):
+            name = st.text_input("नाम"); phone = st.text_input("मोबाइल"); addr = st.text_area("पता")
+            bank = st.text_input("बैंक"); acc = st.text_input("अकाउंट नंबर"); ifsc = st.text_input("IFSC")
+            if st.form_submit_button("सेव करें"):
+                conn.execute("INSERT INTO employees (name, phone, address, bank_name, acc_no, ifsc) VALUES (?,?,?,?,?,?)", (name, phone, addr, bank, acc, ifsc))
+                conn.commit(); st.success("डेटा सेव हुआ!")
+    else:
+        st.info("आप सिर्फ डेटा देख सकते हैं (एडमिन से संपर्क करें)")
     st.dataframe(pd.read_sql("SELECT * FROM employees", conn))
 
-# 3. उपकरण प्रबंधन
 elif choice == "उपकरण प्रबंधन":
     st.title("🚜 उपकरण प्रबंधन")
     with st.form("equip_form"):
