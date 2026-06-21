@@ -36,7 +36,9 @@ if not st.session_state.logged_in:
 
 # Sidebar
 st.sidebar.title("🏗️ GIEPL ERP")
-st.sidebar.write(f"यूजर: {st.session_state.user_role.upper()}")
+# फिक्स्ड एरर हैंडलिंग के साथ
+role_display = st.session_state.user_role if st.session_state.user_role else "GUEST"
+st.sidebar.write(f"यूजर: {role_display.upper()}")
 choice = st.sidebar.selectbox("मेनू", ["डैशबोर्ड", "कर्मचारी प्रबंधन", "उपकरण प्रबंधन"])
 
 # Developer Credit
@@ -80,4 +82,5 @@ elif choice == "उपकरण प्रबंधन":
 
 if st.sidebar.button("Logout"):
     st.session_state.logged_in = False
+    st.session_state.user_role = None # रोल को भी रिसेट कर दें
     st.rerun()
